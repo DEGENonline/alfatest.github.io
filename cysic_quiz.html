@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Альфа-Квест</title>
+<style>
+:root{
+  --alpha:#E30613;
+  --alpha-dark:#B71C1C;
+  --bg:var(--tg-theme-bg-color,#111);
+  --secbg:var(--tg-theme-secondary-bg-color,#1c1c1e);
+  --txt:var(--tg-theme-text-color,#fff);
+  --hint:var(--tg-theme-hint-color,#9e9e9e);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,sans-serif}
+body{background:var(--bg);color:var(--txt);padding-bottom:72px}
+header{padding:16px 16px 8px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-weight:700;font-size:20px;letter-spacing:.5px}
+.logo span{color:var(--alpha)}
+.badge{background:var(--secbg);padding:4px 10px;border-radius:99px;font-size:14px}
+.badge b{color:var(--alpha)}
+.progress{margin:12px 16px;height:8px;background:var(--secbg);border-radius:4px;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--alpha-dark),var(--alpha));width:62%}
+
+/* Sections */
+section{display:none;padding:0 16px;animation:fade .15s}
+section.active{display:block}
+@keyframes fade{from{opacity:.4;transform:translateY(4px)}}
+.card{background:var(--secbg);border-radius:16px;padding:14px;margin-bottom:12px;border-left:4px solid transparent}
+.card.live{border-left-color:var(--alpha)}
+.card h3{font-size:16px;margin-bottom:6px}
+.card p{font-size:13px;color:var(--hint)}
+.btn{margin-top:10px;background:var(--alpha);border:none;color:#fff;padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px}
+.btn:active{opacity:.8}
+.done{color:#22c55e;font-size:13px}
+
+/* Referral */
+.ref-link{display:flex;gap:8px;margin:10px 0}
+.ref-link input{flex:1;background:var(--bg);border:1px solid var(--secbg);color:var(--txt);padding:10px;border-radius:12px;font-size:13px}
+.stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--secbg);font-size:14px}
+.stat:last-child{border:none}
+.stat b{color:var(--alpha)}
+
+/* UGC grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{position:relative;border-radius:12px;overflow:hidden;background:#333;height:120px}
+.tile img{width:100%;height:100%;object-fit:cover}
+.vote{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);padding:4px 6px;border-radius:99px;font-size:12px}
+.fab{position:fixed;bottom:84px;right:16px;width:56px;height:56px;background:var(--alpha);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 6px 12px rgba(227,6,19,.4)}
+
+/* Leaderboard */
+.lead{list-style:none}
+.lead li{display:flex;align-items:center;gap:12px;padding:10px;background:var(--secbg);margin-bottom:8px;border-radius:12px}
+.lead li:first-child{background:linear-gradient(90deg,var(--alpha-dark),var(--alpha));color:#fff}
+.rank{width:24px;text-align:center;font-weight:700}
+.avatar{width:32px;height:32px;border-radius:50%;background:#555}
+.xp{margin-left:auto;font-weight:600;color:var(--alpha)}
+li:first-child .xp{color:#fff}
+
+/* Bottom tab */
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--secbg);display:flex;justify-content:space-around;padding:8px 0 20px;border-top:1px solid rgba(255,255,255,.05)}
+nav button{background:none;border:none;color:var(--hint);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+nav button.active{color:var(--alpha)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span>α</span>-Квест</div>
+  <div class="badge"><b id="xp">1240</b> XP</div>
+</header>
+<div class="progress"><i></i></div>
+
+<!-- ЗАДАНИЯ -->
+<section id="tasks" class="active">
+  <div class="card live">
+    <h3>Ежедневно: Викторина «Старт α»</h3>
+    <p>Ответь на 5 вопросов • +120 XP</p>
+    <button class="btn">Начать</button>
+  </div>
+  <div class="card">
+    <h3>Сюжет: Найди QR в чате</h3>
+    <p>Сфотографируй и загрузи в UGC • +200 XP</p>
+  </div>
+  <div class="card"><span class="done">✓ Подписка на канал</span></div>
+</section>
+
+<!-- РЕФЕРАЛ -->
+<section id="ref">
+  <h2 style="margin-bottom:8px">Приглашай союзников</h2>
+  <div class="ref-link">
+    <input id="refUrl" readonly value="t.me/AlphaQuestBot?start=ref123">
+    <button class="btn" style="margin:0;padding:10px" onclick="copyRef()">Копир.</button>
+  </div>
+  <div class="stat"><span>Приглашено</span><b>7</b></div>
+  <div class="stat"><span>Активных (прошли 1 квест)</span><b>4</b></div>
+  <div class="stat"><span>XP-бонус</span><b>+340</b></div>
+</section>
+
+<!-- UGC -->
+<section id="ugc">
+  <div class="grid">
+    <div class="tile"><img src="https://placehold.co/300x300/E30613/FFFFFF?text=α-meme"><div class="vote">🔥 42</div></div>
+    <div class="tile"><img src="https://placehold.co/300x300/111/FFFFFF?text=Video"><div class="vote">🔥 31</div></div>
+    <div class="tile"><img src="https://placehold.co/300x300/333/FFFFFF?text=Quest"><div class="vote">🔥 12</div></div>
+  </div>
+</section>
+
+<!-- ЛИДЕРЫ -->
+<section id="lead">
+  <ol class="lead">
+    <li><span class="rank">1</span><img src="https://placehold.co/64" class="avatar"><span>@alpha01</span><span class="xp">2 830</span></li>
+    <li><span class="rank">2</span><img src="https://placehold.co/64/999" class="avatar"><span>@kate</span><span class="xp">2 590</span></li>
+    <li><span class="rank">3</span><img src="https://placehold.co/64/777" class="avatar"><span>@leo</span><span class="xp">2 140</span></li>
+    <li><span class="rank">14</span><img src="https://placehold.co/64/444" class="avatar"><span>Вы</span><span class="xp">1 240</span></li>
+  </ol>
+</section>
+
+<div class="fab" onclick="alert('Загрузка UGC…')">+</div>
+
+<nav>
+  <button class="active" data-tab="tasks"><svg viewBox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h18"/></svg>Задания</button>
+  <button data-tab="ref"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Рефералы</button>
+  <button data-tab="ugc"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 14l2-2 4 4"/></svg>Лента</button>
+  <button data-tab="lead"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17a5 5 0 0 0 5-5V4H7v8a5 5 0 0 0 5 5z"/></svg>Лидеры</button>
+</nav>
+
+<script>
+const tg=window.Telegram.WebApp; tg.expand(); tg.ready();
+tg.setHeaderColor('secondary_bg_color'); tg.setBackgroundColor('#000');
+// цвет MainButton под акцент
+tg.MainButton.setParams({text_color:'#fff',color:'#E30613',is_visible:false});
+
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button,section').forEach(el=>el.classList.remove('active'));
+  b.classList.add('active'); document.getElementById(b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='ref'){tg.MainButton.setText('Поделиться ссылкой');tg.MainButton.show();}
+  else tg.MainButton.hide();
+});
+tg.MainButton.onClick(()=>{
+  const url=document.getElementById('refUrl').value;
+  tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(url)+'&text=Идём в Альфа-Квест!');
+});
+function copyRef(){navigator.clipboard.writeText(document.getElementById('refUrl').value);tg.HapticFeedback.notificationOccurred('success');}
+</script>
+</body>
+</html>
